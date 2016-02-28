@@ -1,0 +1,217 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>audio.js example</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no" />
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif !important;
+        }
+
+        @media only screen and (max-width: 320px) {
+            body {
+                font-size: 13px !important;
+            }
+        }
+
+        @media only screen and (min-width: 321px) and (max-width: 768px) {
+            body {
+                font-size: 16px !important;
+            }
+        }
+
+        @media only screen and (min-width: 769px) and (max-width: 1280px) {
+
+            body {
+                font-size: 30px !important;
+            }
+        }
+
+        @media only screen and (min-width: 1281px) {
+            body {
+                font-size: 22px !important;
+            }
+        }
+
+        #log-panel {
+            box-sizing: border-box;
+            width: 50%;
+            height: 100%;
+            background-color: #333;
+            color: #fff;
+            overflow-y: auto;
+            font-family: 'Segoe UI Light';
+            margin: 0;
+            padding: .5em;
+            -webkit-padding-start: .5em;
+            list-style: none;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+
+            #log-panel li {
+                white-space: nowrap;
+            }
+
+        .buttons {
+            box-sizing: border-box;
+            width: 50%;
+            position: absolute;
+            right: 0;
+            top: 0;
+            padding: .5em;
+        }
+
+        .btn {
+            margin-bottom: 1em;
+            padding: 1em;
+            background-color: #4078c0;
+            border: none;
+            border-radius: .5em;
+            color: #fff;
+            outline: none;
+            font-size: 1em;
+        }
+
+            .btn:active {
+                background-color: #396cac;
+                -webkit-transform: scale(.95);
+                -ms-transform: scale(.95);
+                transform: scale(.95);
+            }
+    </style>
+</head>
+<body touchstart="">
+    <ol id="log-panel"></ol>
+    <div class="buttons">
+        <button id="startRecord" data-bind="click: startRecord" class="btn btn-primary">开始录音</button>
+        <button id="stopRecord" data-bind="click: stopRecord" class="btn btn-primary">停止录音</button>
+        <button id="playVoice" data-bind="click: playRecord" class="btn btn-primary">播放录音</button>
+        <button id="stopVoice" data-bind="click: stopPlayRecord" class="btn btn-primary">停止播放</button>
+        <button data-bind="event: {touchstart: startRecord, touchend: stopRecord}" class="btn btn-primary">按住录音</button>
+        <button data-bind="click: toggleLog, text: logging() ? '暂停log' : '继续log'" class="btn btn-primary"></button>
+        <button data-bind="click: clearLog" class="btn btn-primary">清空log</button>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.0/knockout-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-beta1/jquery.min.js"></script>
+    <script src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
+    <script src="../lib/recorder.js"></script>
+    <script src="../lib/recorderWorker.js"></script>
+    <script>
+        var audioConfig = {
+            recorderWorkerPath: '../lib/recorderWorker.js'
+        };
+    </script>
+    <script src="../lib/audio.js"></script>
+    <script>
+        /*********** Log ************/
+        var oldLog, newLog;
+        try {
+            var logPanel = document.getElementById('log-panel');
+            var startTime = new Date().getTime();
+            oldLog = console.log;
+            console.log = newLog = function () {
+                var msg = '';
+                for (var i = 0, j = arguments.length; i < j; i++) {
+                    msg += arguments[i] + ' ';
+                }
+                var logItem = document.createElement('li');
+                var text = document.createTextNode(msg);
+                logItem.appendChild(text);
+                logPanel.appendChild(logItem);
+                logPanel.scrollTop = logPanel.scrollHeight;
+                oldLog.apply(console, arguments);
+            };
+
+            function emptyNode(node) {
+                while (node.firstChild) {
+                    node.removeChild(node.firstChild);
+                }
+            }
+
+            function clearConsole() {
+                console.clear && console.clear();
+                emptyNode(logPanel);
+                startTime = new Date().getTime();
+            }
+            //clearConsole();
+
+            var events = 'canplay,ended,loadeddata,loadedmetadata,loadstart,pause,play,playing'.split(',');
+
+            // event handler
+            var onEvent = function (e) {
+                var endTime = new Date().getTime();
+                console.log(e.type, (endTime - startTime) / 1000 + 's');
+            };
+        } catch (e) {
+            alert(e);
+        }
+
+        function viewModel() {
+            var self = this;
+            self.startRecord = function () {
+                audio.startRecord().done(function () {
+                    console.log('startRecord done.');
+                }).fail(function (r) {
+                    console.log('startRecord failed.', JSON.stringify(r));
+                });
+            };
+
+            self.stopRecord = function () {
+                audio.stopRecord()
+                    .done(function (res) {
+                        self.localId = res.localId;
+                        console.log('stopRecord done.');
+                    }).fail(function (r) {
+                        console.log('stopRecord failed.', JSON.stringify(r));
+                    });
+            };
+
+            self.playRecord = function () {
+                audio.playRecord({ localId: self.localId })
+                    .done(function () {
+                    console.log('playRecord done.');
+                }).fail(function () {
+                    console.log('playRecord failed.');
+                });
+            };
+
+            self.stopPlayRecord = function () {
+                audio.stopPlayRecord({ localId: self.localId }).done(function () {
+                    console.log('stopPlayRecord done.');
+                }).fail(function () {
+                    console.log('stopPlayRecord failed.');
+                });
+            };
+
+            self.toggleLog = function () {
+                self.logging() ? self.pauseLog() : self.resumeLog();
+                self.logging(!self.logging());
+            }
+
+            self.pauseLog = function () {
+                console.log = oldLog;
+            }
+
+            self.resumeLog = function () {
+                console.log = newLog;
+            }
+
+            self.clearLog = function () {
+                clearConsole();
+            }
+
+            self.logging = ko.observable(true);
+        }
+        ko.applyBindings(viewModel);
+    </script>
+</body>
+</html>
