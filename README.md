@@ -124,7 +124,7 @@ audio.stopPlayRecord({
 
 我觉得这应该算是一个bug, 如果没有在录音但是调用了endRecord, 那应该fail并且errMsg为NotRecording.
 
-#录音后播放audio声音变得特别小
+##录音后播放audio声音变得特别小
 微信JSSDK在iPhone上有个bug: 录音之后, 播放声音(如audio, video)都会通过听筒(earphone. 如果没插耳机, 就是通过iPhone上部的听筒; 否则就是通过耳机), 而不是外放(speaker), **如果你用外放的话这会让你感觉声音变小了很多**; 如果你用耳机的话, 这不会产生影响.
 
 我的解决方法是: 每次录音结束(`stopRecord`)之后立即调用`playRecord`和`stopPlayRecord`, 因为我发现`playRecord`一次后声音就正常地从外放播放出来了.
