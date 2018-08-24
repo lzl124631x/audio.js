@@ -1,6 +1,8 @@
 我还在持续做微信JSSDK录音方面的开发, 欢迎大家使用audio.js并提出宝贵意见, 我会尽快给大家反馈!  
 个人觉得recorder.js还不是很好用. 如果有人发现了比recorder.js更好用的HTML5录音js, 欢迎推荐.
 
+* 我整理了一篇文档, [微信JSSDK与录音相关的坑](https://www.cnblogs.com/7z7chn/p/5400789.html). 欢迎来看看*
+
 # audio.js要解决的问题是?
 微信JSSDK为前端提供了一些与NativeApp交互的接口, 如通过图像接口可以拍照或访问手机相册, 通过音频接口可以录音.
 
